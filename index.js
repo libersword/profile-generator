@@ -1,8 +1,9 @@
-const fs = require("fs");
+const fs = require('fs'),
+    convertFactory = require('electron-html-to');
 const axios = require("axios");
 const inquirer = require("inquirer");
 const util = require("util");
-
+const electron = require('electron');
 const writeFileAsync = util.promisify(fs.writeFile);
 
 let username = '';
@@ -40,12 +41,26 @@ function getGithub(){
         repos = results.public_repos;
         picture = results.avatar_url;
         const html = generateHTML(name, username, bio, location, profile, following, followers, repos, picture);
-        writeFileAsync('index.html', html);
+        // writeFileAsync('index.html', html);
+        generatePDF(html)
     });
     });
   }
-  
-  
+
+  function generatePDF(html){
+    var conversion = convertFactory({
+      converterPath: convertFactory.converters.PDF
+    });
+    
+    conversion({ html: html }, function(err, result) {
+      if (err) {
+        console.log(html);
+        return console.error(err);
+      }
+      console.log(result.logs);
+      result.stream.pipe(fs.createWriteStream('githubProfile.pdf'));
+    });
+}
   function generateHTML(name, username, bio, location, profile, following, followers, repos, picture) {
     const colors = {
       green: {
@@ -248,6 +263,9 @@ function getGithub(){
         <div class="card">
         <h2>Repos: ${repos}</h2>
         </div>
+        </div>
+        <div id="print-this">
+        <button id ="print-this-btn">Print this resume</button>
         </div>
       </body>
       </html>
