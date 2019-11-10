@@ -1,10 +1,13 @@
-const fs = require('fs'),
-    convertFactory = require('electron-html-to');
+const fs = require('fs')
 const axios = require("axios");
 const inquirer = require("inquirer");
 const util = require("util");
-const electron = require('electron');
 const writeFileAsync = util.promisify(fs.writeFile);
+const convertHTMLToPDF = require("pdf-puppeteer");
+ 
+var callback = function (pdf) {
+  writeFileAsync('githubProfile.pdf', pdf);
+}
 
 let username = '';
 let bio = '';
@@ -41,26 +44,11 @@ function getGithub(){
         repos = results.public_repos;
         picture = results.avatar_url;
         const html = generateHTML(name, username, bio, location, profile, following, followers, repos, picture);
-        // writeFileAsync('index.html', html);
-        generatePDF(html)
+        convertHTMLToPDF(html, callback);
     });
     });
   }
 
-  function generatePDF(html){
-    var conversion = convertFactory({
-      converterPath: convertFactory.converters.PDF
-    });
-    
-    conversion({ html: html }, function(err, result) {
-      if (err) {
-        console.log(html);
-        return console.error(err);
-      }
-      console.log(result.logs);
-      result.stream.pipe(fs.createWriteStream('githubProfile.pdf'));
-    });
-}
   function generateHTML(name, username, bio, location, profile, following, followers, repos, picture) {
     const colors = {
       green: {
